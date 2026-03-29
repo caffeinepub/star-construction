@@ -1,0 +1,1728 @@
+import { Toaster } from "@/components/ui/sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Copy,
+  Loader2,
+  LogIn,
+  LogOut,
+  MapPin,
+  Menu,
+  MessageCircle,
+  Phone,
+  Play,
+  Share2,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
+import {
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { ExternalBlob } from "./backend";
+import { InventoryDashboard } from "./components/InventoryDashboard";
+import { useActor } from "./hooks/useActor";
+import { useInternetIdentity } from "./hooks/useInternetIdentity";
+
+const NAV_LINKS = [
+  { label: "Home", href: "#home" },
+  { label: "Services", href: "#services" },
+  { label: "Machines", href: "#machines" },
+  { label: "Videos", href: "#videos" },
+  { label: "Booking", href: "#booking" },
+  { label: "Reviews", href: "#testimonials" },
+  { label: "Location", href: "#location" },
+];
+
+const SERVICES = [
+  {
+    emoji: "🚜",
+    title: "मिट्टी लोडिंग",
+    desc: "JCB से मिट्टी खुदाई और लोडिंग सर्विस",
+  },
+  {
+    emoji: "🚛",
+    title: "डंपर सर्विस",
+    desc: "मिट्टी, रेत, गिट्टी ट्रांसपोर्ट",
+  },
+  {
+    emoji: "🏗️",
+    title: "फाउंडेशन भराई",
+    desc: "नींव भराई और लेवलिंग का काम",
+  },
+  {
+    emoji: "🏡",
+    title: "मिट्टी सप्लाई",
+    desc: "घर, खेत, साइट के लिए मिट्टी सप्लाई",
+  },
+];
+
+const MACHINES = [
+  {
+    src: "/assets/generated/jcb-machine.dim_800x600.jpg",
+    alt: "JCB Excavator",
+    label: "JCB Excavator",
+  },
+  {
+    src: "/assets/generated/dumper-machine.dim_800x600.jpg",
+    alt: "Construction Dumper",
+    label: "Dumper",
+  },
+  {
+    src: "/assets/generated/tractor-machine.dim_800x600.jpg",
+    alt: "Tractor",
+    label: "Tractor Trolley",
+  },
+];
+
+const VIDEO_PLACEHOLDERS = [
+  { emoji: "🚜", title: "JCB Service", titleHindi: "JCB सर्विस" },
+  { emoji: "🏗️", title: "Mitti Loading", titleHindi: "मिट्टी लोडिंग" },
+  { emoji: "🏡", title: "Ghar ka Material", titleHindi: "घर का मटेरियल" },
+];
+
+const TESTIMONIALS = [
+  {
+    name: "Ramesh Yadav",
+    location: "Siddharth Nagar",
+    stars: 5,
+    text: "Star Construction का काम बहुत अच्छा है। JCB से मिट्टी खुदाई जल्दी और सही हुई। Highly recommended!",
+    emoji: "🚜",
+  },
+  {
+    name: "Suresh Verma",
+    location: "Gorakhpur",
+    stars: 5,
+    text: "Dumper service time पर आई और काम साफ हुआ। बहुत अच्छी service है। दोबारा ज़रूर लेंगे।",
+    emoji: "🚛",
+  },
+  {
+    name: "Meena Devi",
+    location: "Basti",
+    stars: 5,
+    text: "घर की नींव भराई का काम Star Construction ने किया। बहुत professional और fast काम किया।",
+    emoji: "🏡",
+  },
+];
+
+function shareWebsite() {
+  const url = window.location.href;
+  const text =
+    "Star Construction - मिट्टी लोडिंग & डंपर सर्विस | JCB | Dumper | Tractor Trolley";
+  if (navigator.share) {
+    navigator.share({ title: "Star Construction", text, url });
+  } else {
+    navigator.clipboard.writeText(url).then(() => alert("Link copied!"));
+  }
+}
+
+function shareOnWhatsApp() {
+  const url = window.location.href;
+  window.open(
+    `https://wa.me/?text=Star Construction - मिट्टी लोडिंग %26 डंपर सर्विस ${url}`,
+    "_blank",
+  );
+}
+
+function shareOnFacebook() {
+  window.open(
+    `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`,
+    "_blank",
+  );
+}
+
+function copyLink() {
+  navigator.clipboard
+    .writeText(window.location.href)
+    .then(() => alert("Link copied!"));
+}
+
+interface HeaderProps {
+  isAdmin: boolean;
+  onShowInventory: () => void;
+  onLogin: () => void;
+  onLogout: () => void;
+  isLoggedIn: boolean;
+  isLoggingIn: boolean;
+}
+
+function Header({
+  isAdmin,
+  onShowInventory,
+  onLogin,
+  onLogout,
+  isLoggedIn,
+  isLoggingIn,
+}: HeaderProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  return (
+    <header
+      className="fixed top-0 left-0 right-0 z-50"
+      style={{ background: "#111111", borderBottom: "1px solid #222" }}
+    >
+      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        <a
+          href="#home"
+          className="flex items-center gap-2 no-underline"
+          data-ocid="header.link"
+        >
+          <img
+            src="/assets/generated/star-construction-logo-transparent.dim_800x800.png"
+            alt="Star Construction Logo"
+            style={{ height: "48px", width: "auto", objectFit: "contain" }}
+          />
+          <span
+            className="hidden sm:block text-lg font-bold tracking-wide"
+            style={{ color: "#ffffff" }}
+          >
+            <span style={{ color: "#ffcc00" }}>STAR</span> CONSTRUCTION
+          </span>
+        </a>
+
+        <div className="flex items-center gap-2">
+          <nav className="hidden md:flex items-center gap-6">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="text-sm font-semibold transition-colors duration-200 hover:text-yellow-400"
+                style={{ color: "#cfcfcf" }}
+                data-ocid="nav.link"
+              >
+                {link.label}
+              </a>
+            ))}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={onShowInventory}
+                className="text-sm font-semibold transition-colors duration-200"
+                style={{
+                  color: "#ffcc00",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+                data-ocid="nav.inventory.link"
+              >
+                📊 Inventory
+              </button>
+            )}
+          </nav>
+
+          {/* Admin Login/Logout */}
+          {isLoggedIn ? (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+              style={{
+                background: "#1a1a1a",
+                color: "#cfcfcf",
+                border: "1px solid #2a2a2a",
+              }}
+              data-ocid="header.logout.button"
+            >
+              <LogOut size={12} /> Logout
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onLogin}
+              disabled={isLoggingIn}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:brightness-110"
+              style={{ background: "#ffcc00", color: "#0b0b0b" }}
+              data-ocid="header.admin.button"
+            >
+              {isLoggingIn ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <LogIn size={12} />
+              )}
+              Admin
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="md:hidden p-2 rounded-md transition-colors"
+            style={{ color: "#ffcc00" }}
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Toggle menu"
+            data-ocid="nav.toggle"
+          >
+            {menuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+      </div>
+
+      {menuOpen && (
+        <div
+          className="md:hidden px-4 pb-4 flex flex-col gap-3"
+          style={{ background: "#111111" }}
+        >
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="text-sm font-semibold py-2 border-b transition-colors"
+              style={{ color: "#cfcfcf", borderColor: "#222" }}
+              onClick={() => setMenuOpen(false)}
+              data-ocid="nav.link"
+            >
+              {link.label}
+            </a>
+          ))}
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpen(false);
+                onShowInventory();
+              }}
+              className="text-sm font-semibold py-2 border-b text-left transition-colors"
+              style={{
+                color: "#ffcc00",
+                borderColor: "#222",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+              }}
+              data-ocid="nav.inventory.mobile.link"
+            >
+              📊 Inventory
+            </button>
+          )}
+        </div>
+      )}
+    </header>
+  );
+}
+
+function HeroSection() {
+  return (
+    <section
+      id="home"
+      className="relative flex items-center justify-center"
+      style={{
+        minHeight: "70vh",
+        backgroundImage:
+          "url(https://images.unsplash.com/photo-1581094288338-2314dddb7ecc?q=80&w=2070)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.55) 100%)",
+        }}
+      />
+
+      <div className="relative z-10 text-center px-4 max-w-2xl mx-auto">
+        {/* Logo in hero */}
+        <div className="flex justify-center mb-6">
+          <img
+            src="/assets/generated/star-construction-logo-transparent.dim_800x800.png"
+            alt="Star Construction Logo"
+            style={{
+              height: "clamp(140px, 25vw, 220px)",
+              width: "auto",
+              objectFit: "contain",
+              filter: "drop-shadow(0 4px 24px rgba(255,204,0,0.45))",
+            }}
+          />
+        </div>
+        <h1
+          className="font-bold mb-4 leading-tight"
+          style={{
+            fontSize: "clamp(2rem, 6vw, 3.5rem)",
+            color: "#ffcc00",
+            textShadow: "0 2px 12px rgba(0,0,0,0.6)",
+          }}
+        >
+          मिट्टी लोडिंग & डंपर सर्विस
+        </h1>
+        <p
+          className="mb-8 font-semibold"
+          style={{
+            color: "#ffffff",
+            fontSize: "1.15rem",
+            letterSpacing: "0.2em",
+          }}
+        >
+          JCB | Dumper | Tractor Trolley
+        </p>
+        <a
+          href="#booking"
+          className="inline-block font-bold px-8 py-4 rounded-lg text-lg transition-transform duration-200 hover:scale-105 hover:brightness-110"
+          style={{
+            background: "#ffcc00",
+            color: "#0b0b0b",
+            boxShadow: "0 4px 20px rgba(255,204,0,0.4)",
+          }}
+          data-ocid="hero.primary_button"
+        >
+          📲 Book Now
+        </a>
+
+        <div className="flex items-center justify-center gap-3 mt-5 flex-wrap">
+          <button
+            type="button"
+            onClick={shareOnWhatsApp}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 hover:scale-105"
+            style={{
+              background: "rgba(255,255,255,0.1)",
+              color: "#ffcc00",
+              border: "1px solid rgba(255,204,0,0.4)",
+            }}
+            aria-label="Share on WhatsApp"
+            data-ocid="hero.whatsapp_button"
+          >
+            <span>📲</span> WhatsApp
+          </button>
+          <button
+            type="button"
+            onClick={shareOnFacebook}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 hover:scale-105"
+            style={{
+              background: "rgba(255,255,255,0.1)",
+              color: "#ffcc00",
+              border: "1px solid rgba(255,204,0,0.4)",
+            }}
+            aria-label="Share on Facebook"
+            data-ocid="hero.facebook_button"
+          >
+            <span>📘</span> Facebook
+          </button>
+          <button
+            type="button"
+            onClick={copyLink}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 hover:scale-105"
+            style={{
+              background: "rgba(255,255,255,0.1)",
+              color: "#ffcc00",
+              border: "1px solid rgba(255,204,0,0.4)",
+            }}
+            aria-label="Copy link"
+            data-ocid="hero.copy_button"
+          >
+            <Copy size={14} /> Copy
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ServiceCard({
+  emoji,
+  title,
+  desc,
+}: { emoji: string; title: string; desc: string }) {
+  const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    el.style.transform = "translateY(-8px)";
+    el.style.border = "2px solid #ffcc00";
+    el.style.boxShadow =
+      "0 0 20px rgba(255,204,0,0.35), 0 8px 32px rgba(0,0,0,0.5)";
+  };
+
+  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    el.style.transform = "translateY(0)";
+    el.style.border = "1px solid #2a2a2a";
+    el.style.boxShadow = "none";
+  };
+
+  return (
+    <div
+      className="p-6 rounded-xl transition-all duration-300 cursor-default"
+      style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="text-5xl mb-4">{emoji}</div>
+      <h3 className="text-xl font-bold mb-2" style={{ color: "#ffcc00" }}>
+        {title}
+      </h3>
+      <p className="text-sm" style={{ color: "#cfcfcf" }}>
+        {desc}
+      </p>
+    </div>
+  );
+}
+
+function ServicesSection() {
+  return (
+    <section
+      id="services"
+      className="py-20 px-4"
+      style={{ background: "#0b0b0b" }}
+    >
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+          <h2
+            className="text-3xl md:text-4xl font-bold mb-2"
+            style={{ color: "#ffffff" }}
+          >
+            हमारी सेवाएं
+          </h2>
+          <p
+            className="text-sm font-semibold uppercase tracking-widest mb-4"
+            style={{ color: "#ffcc00" }}
+          >
+            Our Services
+          </p>
+          <div
+            className="mx-auto h-1 w-16 rounded-full"
+            style={{ background: "#ffcc00" }}
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {SERVICES.map((service) => (
+            <div key={service.title} data-ocid="services.card">
+              <ServiceCard {...service} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MachinesSection() {
+  return (
+    <section
+      id="machines"
+      className="py-20 px-4"
+      style={{ background: "#111111" }}
+    >
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+          <h2
+            className="text-3xl md:text-4xl font-bold mb-2"
+            style={{ color: "#ffffff" }}
+          >
+            हमारी मशीनें
+          </h2>
+          <p
+            className="text-sm font-semibold uppercase tracking-widest mb-4"
+            style={{ color: "#ffcc00" }}
+          >
+            Our Machines
+          </p>
+          <div
+            className="mx-auto h-1 w-16 rounded-full"
+            style={{ background: "#ffcc00" }}
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {MACHINES.map((machine, i) => (
+            <div
+              key={machine.alt}
+              className="overflow-hidden rounded-xl relative group"
+              style={{ border: "1px solid #2a2a2a" }}
+              data-ocid={`machines.item.${i + 1}`}
+            >
+              <img
+                src={machine.src}
+                alt={machine.alt}
+                className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+              <div
+                className="absolute bottom-0 left-0 right-0 px-4 py-3"
+                style={{
+                  background: "linear-gradient(transparent, rgba(0,0,0,0.85))",
+                }}
+              >
+                <span
+                  className="text-sm font-semibold"
+                  style={{ color: "#ffcc00" }}
+                >
+                  {machine.label}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Upload Modal ──────────────────────────────────────────────────────────────
+
+function UploadModal({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const { actor } = useActor();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [title, setTitle] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setSelectedFile(file);
+    setError("");
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setError("कृपया पहले photo या video चुनें");
+      return;
+    }
+    if (!actor) {
+      setError("Connection नहीं हो पाई, थोड़ी देर बाद try करें");
+      return;
+    }
+
+    setUploading(true);
+    setError("");
+    setProgress(0);
+
+    try {
+      const arrayBuffer = await selectedFile.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((pct) => {
+        setProgress(Math.round(pct));
+      });
+
+      const mediaType = selectedFile.type.startsWith("video/")
+        ? "video"
+        : "image";
+      const mediaTitle = title.trim() || selectedFile.name;
+
+      await actor.addMedia(blob, mediaType, mediaTitle);
+
+      setSuccess(true);
+      setProgress(100);
+
+      setTimeout(() => {
+        onSuccess();
+        onClose();
+      }, 1200);
+    } catch (err) {
+      console.error(err);
+      setError("Upload नहीं हो पाया। दोबारा try करें।");
+      setUploading(false);
+    }
+  };
+
+  const inputStyle = {
+    background: "#111111",
+    border: "1px solid #333",
+    color: "#ffffff",
+    borderRadius: "8px",
+    padding: "12px 16px",
+    width: "100%",
+    fontSize: "1rem",
+    outline: "none",
+  } as const;
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center"
+      style={{ background: "rgba(0,0,0,0.85)" }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onClose();
+      }}
+      data-ocid="upload.modal"
+    >
+      <div
+        className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-6"
+        style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold" style={{ color: "#ffcc00" }}>
+            📷 Photo / Video Upload करें
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 rounded-full transition-colors hover:bg-white/10"
+            style={{ color: "#cfcfcf" }}
+            aria-label="Close"
+            data-ocid="upload.close_button"
+          >
+            <X size={22} />
+          </button>
+        </div>
+
+        {success ? (
+          <div className="text-center py-8" data-ocid="upload.success_state">
+            <div className="text-5xl mb-3">✅</div>
+            <p className="text-lg font-bold" style={{ color: "#ffcc00" }}>
+              Upload हो गया!
+            </p>
+            <p className="text-sm mt-1" style={{ color: "#cfcfcf" }}>
+              आपका काम "हमारा काम" section में दिखेगा
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="mb-5">
+              <label
+                htmlFor="media-file-input"
+                className="block text-sm font-semibold mb-2"
+                style={{ color: "#cfcfcf" }}
+              >
+                Photo या Video चुनें
+              </label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                capture="environment"
+                onChange={handleFileChange}
+                className="hidden"
+                id="media-file-input"
+              />
+              <label
+                htmlFor="media-file-input"
+                className="flex items-center justify-center gap-3 w-full py-10 rounded-xl cursor-pointer transition-all duration-200"
+                style={{
+                  border: selectedFile
+                    ? "2px solid #ffcc00"
+                    : "2px dashed #444",
+                  background: "#111111",
+                  color: selectedFile ? "#ffcc00" : "#777",
+                }}
+                data-ocid="upload.dropzone"
+              >
+                {selectedFile ? (
+                  <div className="text-center">
+                    <div className="text-3xl mb-1">
+                      {selectedFile.type.startsWith("video/") ? "🎬" : "📷"}
+                    </div>
+                    <p
+                      className="text-sm font-semibold"
+                      style={{ color: "#ffcc00" }}
+                    >
+                      {selectedFile.name}
+                    </p>
+                    <p className="text-xs mt-1" style={{ color: "#777" }}>
+                      {(selectedFile.size / 1024 / 1024).toFixed(1)} MB
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <Upload size={32} className="mx-auto mb-2" />
+                    <p className="text-sm font-semibold">यहाँ tap करके चुनें</p>
+                    <p className="text-xs mt-1">Camera से directly भी ले सकते हैं</p>
+                  </div>
+                )}
+              </label>
+            </div>
+
+            <div className="mb-5">
+              <label
+                htmlFor="media-title"
+                className="block text-sm font-semibold mb-2"
+                style={{ color: "#cfcfcf" }}
+              >
+                काम का नाम (Optional)
+              </label>
+              <input
+                id="media-title"
+                type="text"
+                placeholder="जैसे: JCB खुदाई, मिट्टी लोडिंग..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                style={inputStyle}
+                data-ocid="upload.input"
+              />
+            </div>
+
+            {uploading && (
+              <div className="mb-4" data-ocid="upload.loading_state">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs" style={{ color: "#cfcfcf" }}>
+                    Uploading...
+                  </span>
+                  <span
+                    className="text-xs font-bold"
+                    style={{ color: "#ffcc00" }}
+                  >
+                    {progress}%
+                  </span>
+                </div>
+                <div
+                  className="w-full rounded-full h-2"
+                  style={{ background: "#333" }}
+                >
+                  <div
+                    className="h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${progress}%`, background: "#ffcc00" }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <p
+                className="text-sm mb-4 px-3 py-2 rounded-lg"
+                style={{
+                  color: "#ff6b6b",
+                  background: "rgba(255,107,107,0.1)",
+                  border: "1px solid rgba(255,107,107,0.3)",
+                }}
+                data-ocid="upload.error_state"
+              >
+                ⚠️ {error}
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={handleUpload}
+              disabled={uploading || !selectedFile}
+              className="w-full py-4 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-2"
+              style={{
+                background: uploading || !selectedFile ? "#333" : "#ffcc00",
+                color: uploading || !selectedFile ? "#666" : "#0b0b0b",
+                cursor: uploading || !selectedFile ? "not-allowed" : "pointer",
+                boxShadow:
+                  !uploading && selectedFile
+                    ? "0 4px 20px rgba(255,204,0,0.35)"
+                    : "none",
+              }}
+              data-ocid="upload.submit_button"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Upload हो रहा है...
+                </>
+              ) : (
+                <>
+                  <Upload size={18} />
+                  Upload करें
+                </>
+              )}
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Delete Confirm Dialog ─────────────────────────────────────────────────────
+
+function DeleteConfirmDialog({
+  onConfirm,
+  onCancel,
+  isDeleting,
+}: {
+  onConfirm: () => void;
+  onCancel: () => void;
+  isDeleting: boolean;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[300] flex items-center justify-center px-4"
+      style={{ background: "rgba(0,0,0,0.88)" }}
+      data-ocid="media.dialog"
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl p-6"
+        style={{
+          background: "#1a1a1a",
+          border: "1px solid #333",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.7)",
+        }}
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div
+            className="flex items-center justify-center rounded-full"
+            style={{
+              width: "44px",
+              height: "44px",
+              background: "rgba(255,80,80,0.12)",
+              border: "1px solid rgba(255,80,80,0.3)",
+              flexShrink: 0,
+            }}
+          >
+            <Trash2 size={20} color="#ff5050" />
+          </div>
+          <h3 className="text-base font-bold" style={{ color: "#ffffff" }}>
+            Delete करें?
+          </h3>
+        </div>
+        <p className="text-sm mb-6" style={{ color: "#cfcfcf" }}>
+          क्या आप इसे delete करना चाहते हैं?
+        </p>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isDeleting}
+            className="flex-1 py-3 rounded-xl font-semibold text-sm transition-all duration-200"
+            style={{
+              background: "#2a2a2a",
+              color: "#cfcfcf",
+              border: "1px solid #333",
+              cursor: isDeleting ? "not-allowed" : "pointer",
+              opacity: isDeleting ? 0.5 : 1,
+            }}
+            data-ocid="media.cancel_button"
+          >
+            रहने दो
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="flex-1 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
+            style={{
+              background: isDeleting ? "#7a1a1a" : "#cc2200",
+              color: "#ffffff",
+              cursor: isDeleting ? "not-allowed" : "pointer",
+              boxShadow: isDeleting ? "none" : "0 4px 16px rgba(204,34,0,0.4)",
+            }}
+            data-ocid="media.confirm_button"
+          >
+            {isDeleting ? (
+              <>
+                <Loader2 size={15} className="animate-spin" />
+                Delete हो रहा है...
+              </>
+            ) : (
+              <>हाँ, Delete करें</>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Video / Media Section ─────────────────────────────────────────────────────
+
+function VideoSection() {
+  const { actor, isFetching } = useActor();
+  const queryClient = useQueryClient();
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<bigint | null>(null);
+  const [deletingId, setDeletingId] = useState<bigint | null>(null);
+
+  const { data: mediaItems, isLoading } = useQuery({
+    queryKey: ["media"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getMedia();
+    },
+    enabled: !!actor && !isFetching,
+  });
+
+  const refreshMedia = () => {
+    queryClient.invalidateQueries({ queryKey: ["media"] });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!actor || deleteTargetId === null) return;
+    setDeletingId(deleteTargetId);
+    try {
+      await (
+        actor as typeof actor & {
+          deleteMedia: (id: bigint) => Promise<boolean>;
+        }
+      ).deleteMedia(deleteTargetId);
+      refreshMedia();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeletingId(null);
+      setDeleteTargetId(null);
+    }
+  };
+
+  return (
+    <section
+      id="videos"
+      className="py-20 px-4"
+      style={{ background: "#0b0b0b" }}
+    >
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+          <h2
+            className="text-3xl md:text-4xl font-bold mb-2"
+            style={{ color: "#ffffff" }}
+          >
+            हमारा काम
+          </h2>
+          <p
+            className="text-sm font-semibold uppercase tracking-widest mb-4"
+            style={{ color: "#ffcc00" }}
+          >
+            Our Work
+          </p>
+          <div
+            className="mx-auto h-1 w-16 rounded-full"
+            style={{ background: "#ffcc00" }}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {VIDEO_PLACEHOLDERS.map((video, i) => (
+            <div
+              key={video.title}
+              className="rounded-xl overflow-hidden"
+              style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}
+              data-ocid={`videos.item.${i + 1}`}
+            >
+              <div
+                className="relative flex items-center justify-center"
+                style={{
+                  aspectRatio: "16/9",
+                  background:
+                    "linear-gradient(135deg, #111111 0%, #1e1e1e 100%)",
+                  borderBottom: "1px solid #2a2a2a",
+                }}
+              >
+                <span
+                  className="absolute"
+                  style={{
+                    fontSize: "3.5rem",
+                    opacity: 0.15,
+                    userSelect: "none",
+                  }}
+                >
+                  {video.emoji}
+                </span>
+                <div
+                  className="relative flex items-center justify-center rounded-full"
+                  style={{
+                    width: "60px",
+                    height: "60px",
+                    background: "rgba(255, 204, 0, 0.15)",
+                    border: "2px solid #ffcc00",
+                  }}
+                >
+                  <Play
+                    size={26}
+                    color="#ffcc00"
+                    fill="#ffcc00"
+                    style={{ marginLeft: "3px" }}
+                  />
+                </div>
+              </div>
+              <div className="px-4 py-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <span style={{ fontSize: "1.3rem" }}>{video.emoji}</span>
+                  <h3
+                    className="font-bold text-base"
+                    style={{ color: "#ffffff" }}
+                  >
+                    {video.titleHindi}
+                  </h3>
+                </div>
+                <p className="text-xs" style={{ color: "#777777" }}>
+                  {video.title}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Upload CTA button */}
+        <div className="flex justify-center mt-10">
+          <button
+            type="button"
+            onClick={() => setUploadOpen(true)}
+            className="flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-base transition-all duration-200 hover:scale-105 hover:brightness-110"
+            style={{
+              background: "#ffcc00",
+              color: "#0b0b0b",
+              boxShadow: "0 4px 24px rgba(255,204,0,0.4)",
+            }}
+            data-ocid="videos.upload_button"
+          >
+            <Upload size={20} />📷 Photo / Video Upload करें
+          </button>
+        </div>
+
+        {/* Uploaded media gallery */}
+        <div className="mt-14">
+          <h3
+            className="text-2xl font-bold mb-6 text-center"
+            style={{ color: "#ffffff" }}
+          >
+            अपलोड किया गया काम
+          </h3>
+
+          {isLoading ? (
+            <div
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5"
+              data-ocid="media.loading_state"
+            >
+              {[1, 2, 3].map((n) => (
+                <div
+                  key={n}
+                  className="rounded-xl overflow-hidden animate-pulse"
+                  style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}
+                >
+                  <div style={{ aspectRatio: "16/9", background: "#2a2a2a" }} />
+                  <div className="p-3">
+                    <div
+                      className="h-3 rounded mb-2"
+                      style={{ background: "#2a2a2a", width: "60%" }}
+                    />
+                    <div
+                      className="h-2 rounded"
+                      style={{ background: "#222", width: "40%" }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : !mediaItems || mediaItems.length === 0 ? (
+            <div
+              className="text-center py-14 rounded-xl"
+              style={{ background: "#1a1a1a", border: "2px dashed #2a2a2a" }}
+              data-ocid="media.empty_state"
+            >
+              <div className="text-5xl mb-3">📸</div>
+              <p className="font-semibold" style={{ color: "#cfcfcf" }}>
+                अभी कोई photo/video नहीं है
+              </p>
+              <p className="text-sm mt-1" style={{ color: "#555" }}>
+                पहले upload करें — ऊपर वाला बटन दबाएं!
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+              {mediaItems.map((item, i) => (
+                <div
+                  key={item.id.toString()}
+                  className="rounded-xl overflow-hidden relative group transition-transform duration-200 hover:scale-[1.02]"
+                  style={{
+                    background: "#1a1a1a",
+                    border: "1px solid #2a2a2a",
+                    opacity: deletingId === item.id ? 0.5 : 1,
+                    transition: "opacity 0.2s, transform 0.2s",
+                  }}
+                  data-ocid={`media.item.${i + 1}`}
+                >
+                  {/* Delete button */}
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTargetId(item.id)}
+                    disabled={deletingId !== null}
+                    className="absolute top-2 right-2 z-10 flex items-center justify-center rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      background: "rgba(20,0,0,0.78)",
+                      border: "1px solid rgba(255,80,80,0.5)",
+                      cursor: deletingId !== null ? "not-allowed" : "pointer",
+                    }}
+                    aria-label="Delete"
+                    data-ocid={`media.delete_button.${i + 1}`}
+                  >
+                    {deletingId === item.id ? (
+                      <Loader2
+                        size={14}
+                        color="#ff5050"
+                        className="animate-spin"
+                      />
+                    ) : (
+                      <Trash2 size={14} color="#ff5050" />
+                    )}
+                  </button>
+
+                  {item.mediaType === "video" ? (
+                    <video
+                      src={item.blob.getDirectURL()}
+                      controls
+                      className="w-full"
+                      style={{ aspectRatio: "16/9", objectFit: "cover" }}
+                    >
+                      <track kind="captions" />
+                    </video>
+                  ) : (
+                    <img
+                      src={item.blob.getDirectURL()}
+                      alt={item.title}
+                      className="w-full object-cover"
+                      style={{ aspectRatio: "16/9" }}
+                    />
+                  )}
+                  <div className="px-3 py-3">
+                    <p
+                      className="text-sm font-semibold truncate"
+                      style={{ color: "#ffffff" }}
+                    >
+                      {item.title}
+                    </p>
+                    <p className="text-xs mt-0.5" style={{ color: "#555" }}>
+                      {new Date(
+                        Number(item.timestamp) / 1_000_000,
+                      ).toLocaleDateString("hi-IN")}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {uploadOpen && (
+        <UploadModal
+          onClose={() => setUploadOpen(false)}
+          onSuccess={refreshMedia}
+        />
+      )}
+
+      {deleteTargetId !== null && (
+        <DeleteConfirmDialog
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteTargetId(null)}
+          isDeleting={deletingId !== null}
+        />
+      )}
+    </section>
+  );
+}
+
+function setInputBorder(
+  el: HTMLInputElement | HTMLTextAreaElement,
+  color: string,
+) {
+  el.style.borderColor = color;
+}
+
+function BookingSection() {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [workDetails, setWorkDetails] = useState("");
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const text = `Name: ${name}%0APhone: ${phone}%0AWork: ${workDetails}`;
+    window.open(`https://wa.me/919890524414?text=${text}`, "_blank");
+  };
+
+  const inputStyle = {
+    background: "#111111",
+    border: "1px solid #333",
+    color: "#ffffff",
+    borderRadius: "8px",
+    padding: "12px 16px",
+    width: "100%",
+    fontSize: "1rem",
+    outline: "none",
+    transition: "border-color 0.2s",
+  } as const;
+
+  return (
+    <section
+      id="booking"
+      className="py-20 px-4"
+      style={{ background: "#111111" }}
+    >
+      <div className="max-w-lg mx-auto">
+        <div className="text-center mb-12">
+          <h2
+            className="text-3xl md:text-4xl font-bold mb-2"
+            style={{ color: "#ffffff" }}
+          >
+            बुकिंग करें
+          </h2>
+          <p
+            className="text-sm font-semibold uppercase tracking-widest mb-4"
+            style={{ color: "#ffcc00" }}
+          >
+            Book Our Service
+          </p>
+          <div
+            className="mx-auto h-1 w-16 rounded-full"
+            style={{ background: "#ffcc00" }}
+          />
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="p-8 rounded-xl"
+          style={{ background: "#1a1a1a", border: "1px solid #ffcc0055" }}
+          data-ocid="booking.card"
+        >
+          <div className="mb-5">
+            <label
+              htmlFor="booking-name"
+              className="block text-sm font-semibold mb-2"
+              style={{ color: "#cfcfcf" }}
+            >
+              आपका नाम (Name)
+            </label>
+            <input
+              id="booking-name"
+              type="text"
+              required
+              placeholder="जैसे: Ramesh Kumar"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={inputStyle}
+              onFocus={(e) => {
+                setInputBorder(e.target, "#ffcc00");
+              }}
+              onBlur={(e) => {
+                setInputBorder(e.target, "#333");
+              }}
+              data-ocid="booking.input"
+            />
+          </div>
+          <div className="mb-5">
+            <label
+              htmlFor="booking-phone"
+              className="block text-sm font-semibold mb-2"
+              style={{ color: "#cfcfcf" }}
+            >
+              फोन नंबर (Phone)
+            </label>
+            <input
+              id="booking-phone"
+              type="tel"
+              required
+              placeholder="जैसे: 9876543210"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              style={inputStyle}
+              onFocus={(e) => {
+                setInputBorder(e.target, "#ffcc00");
+              }}
+              onBlur={(e) => {
+                setInputBorder(e.target, "#333");
+              }}
+              data-ocid="booking.input"
+            />
+          </div>
+          <div className="mb-7">
+            <label
+              htmlFor="booking-work"
+              className="block text-sm font-semibold mb-2"
+              style={{ color: "#cfcfcf" }}
+            >
+              काम की जानकारी (Work Details)
+            </label>
+            <textarea
+              id="booking-work"
+              required
+              rows={4}
+              placeholder="जैसे: 50 ट्रॉली मिट्टी चाहिए, गांव - ..."
+              value={workDetails}
+              onChange={(e) => setWorkDetails(e.target.value)}
+              style={{ ...inputStyle, resize: "vertical" }}
+              onFocus={(e) => {
+                setInputBorder(e.target, "#ffcc00");
+              }}
+              onBlur={(e) => {
+                setInputBorder(e.target, "#333");
+              }}
+              data-ocid="booking.textarea"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full py-4 rounded-lg font-bold text-lg transition-all duration-200 hover:brightness-110 hover:scale-[1.02]"
+            style={{
+              background: "#ffcc00",
+              color: "#0b0b0b",
+              boxShadow: "0 4px 20px rgba(255,204,0,0.35)",
+            }}
+            data-ocid="booking.submit_button"
+          >
+            📲 Send Booking on WhatsApp
+          </button>
+        </form>
+      </div>
+    </section>
+  );
+}
+
+// ─── Testimonials Section ──────────────────────────────────────────────────────
+
+function TestimonialsSection() {
+  return (
+    <section
+      id="testimonials"
+      className="py-20 px-4"
+      style={{ background: "#111111" }}
+    >
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+          <h2
+            className="text-3xl md:text-4xl font-bold mb-2"
+            style={{ color: "#ffffff" }}
+          >
+            हमारे ग्राहक
+          </h2>
+          <p
+            className="text-sm font-semibold uppercase tracking-widest mb-4"
+            style={{ color: "#ffcc00" }}
+          >
+            Customer Reviews
+          </p>
+          <div
+            className="mx-auto h-1 w-16 rounded-full"
+            style={{ background: "#ffcc00" }}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {TESTIMONIALS.map((t, i) => (
+            <div
+              key={t.name}
+              className="p-6 rounded-xl flex flex-col gap-4"
+              style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}
+              data-ocid={`testimonials.item.${i + 1}`}
+            >
+              <div
+                className="flex gap-0.5"
+                style={{
+                  color: "#ffcc00",
+                  fontSize: "1.1rem",
+                  letterSpacing: "2px",
+                }}
+              >
+                {"★".repeat(t.stars)}
+              </div>
+              <p
+                className="text-sm leading-relaxed flex-1"
+                style={{ color: "#cfcfcf" }}
+              >
+                "{t.text}"
+              </p>
+              <div
+                className="flex items-center gap-3 pt-2"
+                style={{ borderTop: "1px solid #2a2a2a" }}
+              >
+                <div
+                  className="flex items-center justify-center rounded-full text-xl flex-shrink-0"
+                  style={{
+                    width: "44px",
+                    height: "44px",
+                    background: "rgba(255,204,0,0.12)",
+                    border: "1px solid rgba(255,204,0,0.3)",
+                  }}
+                >
+                  {t.emoji}
+                </div>
+                <div>
+                  <p className="text-sm font-bold" style={{ color: "#ffffff" }}>
+                    {t.name}
+                  </p>
+                  <p className="text-xs" style={{ color: "#777" }}>
+                    📍 {t.location}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Location Section ──────────────────────────────────────────────────────────
+
+function LocationSection() {
+  return (
+    <section
+      id="location"
+      className="py-20 px-4"
+      style={{ background: "#0b0b0b" }}
+    >
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-12">
+          <h2
+            className="text-3xl md:text-4xl font-bold mb-2"
+            style={{ color: "#ffffff" }}
+          >
+            हमारी लोकेशन
+          </h2>
+          <p
+            className="text-sm font-semibold uppercase tracking-widest mb-4"
+            style={{ color: "#ffcc00" }}
+          >
+            Our Location
+          </p>
+          <div
+            className="mx-auto h-1 w-16 rounded-full"
+            style={{ background: "#ffcc00" }}
+          />
+        </div>
+
+        <div
+          className="overflow-hidden rounded-2xl"
+          style={{ border: "2px solid #2a2a2a" }}
+        >
+          <iframe
+            title="Star Construction Location"
+            src="https://maps.google.com/maps?q=Dumdumwa,+Siddharth+Nagar,+272207,+Uttar+Pradesh,+India&output=embed"
+            width="100%"
+            height="350"
+            style={{ border: "none", display: "block" }}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
+
+        <div
+          className="mt-5 flex items-center justify-center gap-2 px-4 py-3 rounded-xl"
+          style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}
+        >
+          <MapPin size={18} color="#ffcc00" />
+          <p className="text-sm font-semibold" style={{ color: "#cfcfcf" }}>
+            Dumdumwa, Siddharth Nagar, UP 272207
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer
+      className="py-10 px-4"
+      style={{ background: "#111111", borderTop: "1px solid #222" }}
+    >
+      <div className="max-w-5xl mx-auto text-center">
+        <div className="flex justify-center mb-4">
+          <img
+            src="/assets/generated/star-construction-logo-transparent.dim_800x800.png"
+            alt="Star Construction"
+            style={{
+              height: "64px",
+              width: "auto",
+              objectFit: "contain",
+              opacity: 0.85,
+            }}
+          />
+        </div>
+        <div className="text-lg font-bold mb-3">
+          <span style={{ color: "#ffcc00" }}>STAR</span>{" "}
+          <span style={{ color: "#ffffff" }}>CONSTRUCTION</span>
+        </div>
+        <p className="mb-2">
+          <a
+            href="tel:9890524414"
+            className="hover:text-yellow-400 transition-colors"
+            style={{ color: "#cfcfcf" }}
+          >
+            📞 +91 9890524414
+          </a>
+        </p>
+
+        <div className="mt-6 mb-6 pt-6" style={{ borderTop: "1px solid #222" }}>
+          <p
+            className="text-sm font-semibold mb-4"
+            style={{ color: "#cfcfcf" }}
+          >
+            Share करें
+          </p>
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={shareOnWhatsApp}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 hover:scale-105 hover:brightness-110"
+              style={{ background: "#25D366", color: "#ffffff" }}
+              data-ocid="footer.whatsapp_button"
+            >
+              <span>📲</span> WhatsApp
+            </button>
+            <button
+              type="button"
+              onClick={shareOnFacebook}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 hover:scale-105 hover:brightness-110"
+              style={{ background: "#1877F2", color: "#ffffff" }}
+              data-ocid="footer.facebook_button"
+            >
+              <span>📘</span> Facebook
+            </button>
+            <button
+              type="button"
+              onClick={copyLink}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 hover:scale-105 hover:brightness-110"
+              style={{ background: "#ffcc00", color: "#0b0b0b" }}
+              data-ocid="footer.copy_button"
+            >
+              <Copy size={14} /> Copy Link
+            </button>
+          </div>
+        </div>
+
+        <p className="text-sm" style={{ color: "#555" }}>
+          © {new Date().getFullYear()} Star Construction. All Rights Reserved.
+        </p>
+        <p className="text-xs mt-3" style={{ color: "#444" }}>
+          Built with love using{" "}
+          <a
+            href={`https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(typeof window !== "undefined" ? window.location.hostname : "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-yellow-400 transition-colors"
+            style={{ color: "#555" }}
+          >
+            caffeine.ai
+          </a>
+        </p>
+      </div>
+    </footer>
+  );
+}
+
+function FloatingButtons() {
+  return (
+    <>
+      <a
+        href="https://wa.me/919890524414"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed flex items-center justify-center rounded-full transition-transform duration-200 hover:scale-110"
+        style={{
+          bottom: "24px",
+          right: "24px",
+          width: "56px",
+          height: "56px",
+          background: "#25D366",
+          boxShadow: "0 4px 16px rgba(37,211,102,0.5)",
+          zIndex: 100,
+        }}
+        aria-label="WhatsApp"
+        data-ocid="floating.whatsapp_button"
+      >
+        <MessageCircle size={26} color="#fff" />
+      </a>
+
+      <a
+        href="tel:9890524414"
+        className="fixed flex items-center justify-center rounded-full transition-transform duration-200 hover:scale-110"
+        style={{
+          bottom: "92px",
+          right: "24px",
+          width: "56px",
+          height: "56px",
+          background: "#ffcc00",
+          boxShadow: "0 4px 16px rgba(255,204,0,0.5)",
+          zIndex: 100,
+        }}
+        aria-label="Call"
+        data-ocid="floating.call_button"
+      >
+        <Phone size={24} color="#0b0b0b" />
+      </a>
+
+      <button
+        type="button"
+        onClick={shareWebsite}
+        className="fixed flex items-center justify-center rounded-full transition-transform duration-200 hover:scale-110"
+        style={{
+          bottom: "160px",
+          right: "24px",
+          width: "56px",
+          height: "56px",
+          background: "#1a1a1a",
+          border: "2px solid #ffcc00",
+          boxShadow: "0 4px 16px rgba(255,204,0,0.25)",
+          zIndex: 100,
+          cursor: "pointer",
+        }}
+        aria-label="Share"
+        data-ocid="floating.share_button"
+      >
+        <Share2 size={22} color="#ffcc00" />
+      </button>
+    </>
+  );
+}
+
+export default function App() {
+  const { actor } = useActor();
+  const { login, clear, isLoggingIn, loginStatus, identity } =
+    useInternetIdentity();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showInventory, setShowInventory] = useState(false);
+
+  const isLoggedIn = loginStatus === "success" && !!identity;
+
+  const checkAdmin = useCallback(async () => {
+    if (!actor || !isLoggedIn) {
+      setIsAdmin(false);
+      return;
+    }
+    try {
+      const result = await (
+        actor as unknown as { isCallerAdmin(): Promise<boolean> }
+      ).isCallerAdmin();
+      setIsAdmin(result);
+      if (!result) {
+        alert("आप admin नहीं हैं। Admin access नहीं मिला।");
+        clear();
+      }
+    } catch {
+      setIsAdmin(false);
+    }
+  }, [actor, isLoggedIn, clear]);
+
+  useEffect(() => {
+    if (isLoggedIn && actor) {
+      checkAdmin();
+    } else if (!isLoggedIn) {
+      setIsAdmin(false);
+      setShowInventory(false);
+    }
+  }, [isLoggedIn, actor, checkAdmin]);
+
+  return (
+    <div style={{ background: "#0b0b0b", minHeight: "100vh" }}>
+      <Toaster />
+      <Header
+        isAdmin={isAdmin}
+        isLoggedIn={isLoggedIn}
+        isLoggingIn={isLoggingIn}
+        onLogin={login}
+        onLogout={() => {
+          clear();
+          setIsAdmin(false);
+          setShowInventory(false);
+        }}
+        onShowInventory={() => setShowInventory(true)}
+      />
+      <main style={{ paddingTop: "64px" }}>
+        <HeroSection />
+        <ServicesSection />
+        <MachinesSection />
+        <VideoSection />
+        <BookingSection />
+        <TestimonialsSection />
+        <LocationSection />
+      </main>
+      <Footer />
+      <FloatingButtons />
+      {showInventory && isAdmin && (
+        <InventoryDashboard onClose={() => setShowInventory(false)} />
+      )}
+    </div>
+  );
+}
