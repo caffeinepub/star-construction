@@ -171,7 +171,7 @@ function Header({
           data-ocid="header.link"
         >
           <img
-            src="/assets/generated/star-construction-logo-transparent.dim_800x800.png"
+            src="/assets/generated/satar-construction-logo-transparent.dim_600x300.png"
             alt="Star Construction Logo"
             style={{ height: "48px", width: "auto", objectFit: "contain" }}
           />
@@ -328,7 +328,7 @@ function HeroSection() {
         {/* Logo in hero */}
         <div className="flex justify-center mb-6">
           <img
-            src="/assets/generated/star-construction-logo-transparent.dim_800x800.png"
+            src="/assets/generated/satar-construction-logo-transparent.dim_600x300.png"
             alt="Star Construction Logo"
             style={{
               height: "clamp(140px, 25vw, 220px)",
@@ -1510,7 +1510,7 @@ function Footer() {
       <div className="max-w-5xl mx-auto text-center">
         <div className="flex justify-center mb-4">
           <img
-            src="/assets/generated/star-construction-logo-transparent.dim_800x800.png"
+            src="/assets/generated/satar-construction-logo-transparent.dim_600x300.png"
             alt="Star Construction"
             style={{
               height: "64px",
