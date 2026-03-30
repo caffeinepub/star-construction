@@ -115,6 +115,7 @@ export interface backendInterface {
     _caffeineStorageRefillCashier(refillInformation: _CaffeineStorageRefillInformation | null): Promise<_CaffeineStorageRefillResult>;
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     addMedia(blob: ExternalBlob, mediaType: string, title: string): Promise<MediaItem>;
+    deleteMedia(id: bigint): Promise<boolean>;
     getMedia(): Promise<Array<MediaItem>>;
 }
 import type { ExternalBlob as _ExternalBlob, MediaItem as _MediaItem, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
@@ -216,6 +217,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.addMedia(await to_candid_ExternalBlob_n8(this._uploadFile, this._downloadFile, arg0), arg1, arg2);
             return from_candid_MediaItem_n9(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async deleteMedia(arg0: bigint): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteMedia(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteMedia(arg0);
+            return result;
         }
     }
     async getMedia(): Promise<Array<MediaItem>> {

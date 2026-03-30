@@ -61,3 +61,22 @@
     font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
   }
 }
+
+/* Hero Animation Scene */
+@keyframes dig {
+  from {
+    transform: rotate(20deg);
+  }
+  to {
+    transform: rotate(-30deg);
+  }
+}
+
+@keyframes vehicleMove {
+  0% {
+    left: -220px;
+  }
+  100% {
+    left: 110%;
+  }
+}

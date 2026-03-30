@@ -56,6 +56,7 @@ export const idlService = IDL.Service({
     ),
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   'addMedia' : IDL.Func([ExternalBlob, IDL.Text, IDL.Text], [MediaItem], []),
+  'deleteMedia' : IDL.Func([IDL.Nat], [IDL.Bool], []),
   'getMedia' : IDL.Func([], [IDL.Vec(MediaItem)], ['query']),
 });
 
@@ -110,6 +111,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     'addMedia' : IDL.Func([ExternalBlob, IDL.Text, IDL.Text], [MediaItem], []),
+    'deleteMedia' : IDL.Func([IDL.Nat], [IDL.Bool], []),
     'getMedia' : IDL.Func([], [IDL.Vec(MediaItem)], ['query']),
   });
 };

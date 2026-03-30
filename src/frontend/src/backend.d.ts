@@ -23,6 +23,6 @@ export interface MediaItem {
 }
 export interface backendInterface {
     addMedia(blob: ExternalBlob, mediaType: string, title: string): Promise<MediaItem>;
-    getMedia(): Promise<Array<MediaItem>>;
     deleteMedia(id: bigint): Promise<boolean>;
+    getMedia(): Promise<Array<MediaItem>>;
 }

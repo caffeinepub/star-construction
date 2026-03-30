@@ -6,7 +6,6 @@ import Nat "mo:core/Nat";
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
 
-
 actor {
   include MixinStorage();
 
@@ -54,3 +53,4 @@ actor {
     );
   };
 };
+

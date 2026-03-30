@@ -25,12 +25,12 @@ import {
 import { ExternalBlob } from "./backend";
 import { InventoryDashboard } from "./components/InventoryDashboard";
 import { useActor } from "./hooks/useActor";
-import { useInternetIdentity } from "./hooks/useInternetIdentity";
 
 const NAV_LINKS = [
   { label: "Home", href: "#home" },
   { label: "Services", href: "#services" },
   { label: "Machines", href: "#machines" },
+  { label: "Materials", href: "#materials" },
   { label: "Videos", href: "#videos" },
   { label: "Booking", href: "#booking" },
   { label: "Reviews", href: "#testimonials" },
@@ -62,19 +62,46 @@ const SERVICES = [
 
 const MACHINES = [
   {
-    src: "/assets/generated/jcb-machine.dim_800x600.jpg",
+    src: "/assets/generated/jcb-realistic.dim_800x600.jpg",
     alt: "JCB Excavator",
     label: "JCB Excavator",
   },
   {
-    src: "/assets/generated/dumper-machine.dim_800x600.jpg",
+    src: "/assets/generated/dumper-realistic.dim_800x600.jpg",
     alt: "Construction Dumper",
     label: "Dumper",
   },
   {
-    src: "/assets/generated/tractor-machine.dim_800x600.jpg",
+    src: "/assets/generated/tractor-realistic.dim_800x600.jpg",
     alt: "Tractor",
     label: "Tractor Trolley",
+  },
+];
+
+const MATERIALS = [
+  {
+    src: "/assets/generated/cement-bags.dim_800x600.jpg",
+    alt: "Cement bags",
+    label: "सीमेंट",
+    labelEn: "Cement",
+    emoji: "🏗️",
+    desc: "OPC/PPC सीमेंट उपलब्ध",
+  },
+  {
+    src: "/assets/generated/balu-sand.dim_800x600.jpg",
+    alt: "River sand balu",
+    label: "बालू (रेत)",
+    labelEn: "Sand",
+    emoji: "🟡",
+    desc: "नदी की साफ बालू",
+  },
+  {
+    src: "/assets/generated/gitti-gravel.dim_800x600.jpg",
+    alt: "Crushed stone gitti",
+    label: "गिट्टी",
+    labelEn: "Gravel",
+    emoji: "🪨",
+    desc: "कुचला पत्थर / क्रशर गिट्टी",
   },
 ];
 
@@ -143,19 +170,15 @@ function copyLink() {
 interface HeaderProps {
   isAdmin: boolean;
   onShowInventory: () => void;
-  onLogin: () => void;
+  onAdminClick: () => void;
   onLogout: () => void;
-  isLoggedIn: boolean;
-  isLoggingIn: boolean;
 }
 
 function Header({
   isAdmin,
   onShowInventory,
-  onLogin,
+  onAdminClick,
   onLogout,
-  isLoggedIn,
-  isLoggingIn,
 }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -171,7 +194,7 @@ function Header({
           data-ocid="header.link"
         >
           <img
-            src="/assets/generated/satar-construction-logo-transparent.dim_600x300.png"
+            src="/assets/generated/satar-construction-logo-jcb-damfar-transparent.dim_600x300.png"
             alt="Star Construction Logo"
             style={{ height: "48px", width: "auto", objectFit: "contain" }}
           />
@@ -215,7 +238,7 @@ function Header({
           </nav>
 
           {/* Admin Login/Logout */}
-          {isLoggedIn ? (
+          {isAdmin ? (
             <button
               type="button"
               onClick={onLogout}
@@ -232,17 +255,12 @@ function Header({
           ) : (
             <button
               type="button"
-              onClick={onLogin}
-              disabled={isLoggingIn}
+              onClick={onAdminClick}
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:brightness-110"
               style={{ background: "#ffcc00", color: "#0b0b0b" }}
               data-ocid="header.admin.button"
             >
-              {isLoggingIn ? (
-                <Loader2 size={12} className="animate-spin" />
-              ) : (
-                <LogIn size={12} />
-              )}
+              <LogIn size={12} />
               Admin
             </button>
           )}
@@ -328,7 +346,7 @@ function HeroSection() {
         {/* Logo in hero */}
         <div className="flex justify-center mb-6">
           <img
-            src="/assets/generated/satar-construction-logo-transparent.dim_600x300.png"
+            src="/assets/generated/satar-construction-logo-jcb-damfar-transparent.dim_600x300.png"
             alt="Star Construction Logo"
             style={{
               height: "clamp(140px, 25vw, 220px)",
@@ -414,6 +432,402 @@ function HeroSection() {
           >
             <Copy size={14} /> Copy
           </button>
+        </div>
+      </div>
+
+      {/* Animated Ground Scene */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: "140px",
+          overflow: "hidden",
+          zIndex: 5,
+        }}
+      >
+        {/* Sky-to-ground gradient */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(to bottom, transparent 0%, rgba(30,20,10,0.6) 40%, rgba(90,60,30,0.85) 100%)",
+          }}
+        />
+        {/* Ground */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: "50px",
+            background: "linear-gradient(to bottom, #7a5230 0%, #5c3d1e 100%)",
+            borderTop: "3px solid #9a6940",
+          }}
+        />
+        {/* JCB - fixed on left */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "50px",
+            left: "5%",
+            width: "90px",
+            height: "50px",
+          }}
+        >
+          {/* Body */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              width: "90px",
+              height: "40px",
+              background: "#ffcc00",
+              borderRadius: "4px 4px 0 0",
+            }}
+          />
+          {/* Cab */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "40px",
+              left: "5px",
+              width: "40px",
+              height: "22px",
+              background: "#e6b800",
+              borderRadius: "4px 4px 0 0",
+            }}
+          />
+          {/* Arm */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "38px",
+              left: "55px",
+              width: "55px",
+              height: "7px",
+              background: "#222",
+              borderRadius: "3px",
+              transformOrigin: "left center",
+              animation: "dig 2s ease-in-out infinite alternate",
+            }}
+          />
+          {/* Bucket at arm end */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "38px",
+              left: "100px",
+              width: "14px",
+              height: "14px",
+              background: "#444",
+              borderRadius: "0 0 4px 4px",
+              animation: "dig 2s ease-in-out infinite alternate",
+              transformOrigin: "left center",
+            }}
+          />
+          {/* Wheels */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-8px",
+              left: "8px",
+              width: "18px",
+              height: "18px",
+              background: "#222",
+              borderRadius: "50%",
+              border: "3px solid #555",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-8px",
+              left: "35px",
+              width: "18px",
+              height: "18px",
+              background: "#222",
+              borderRadius: "50%",
+              border: "3px solid #555",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-8px",
+              left: "62px",
+              width: "18px",
+              height: "18px",
+              background: "#222",
+              borderRadius: "50%",
+              border: "3px solid #555",
+            }}
+          />
+        </div>
+
+        {/* Dumper - orange, 10s */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "50px",
+            width: "120px",
+            height: "55px",
+            animation: "vehicleMove 10s linear infinite",
+            animationDelay: "0s",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              width: "120px",
+              height: "38px",
+              background: "#e67e22",
+              borderRadius: "4px 4px 0 0",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "38px",
+              left: "10px",
+              width: "45px",
+              height: "20px",
+              background: "#d35400",
+              borderRadius: "4px 4px 0 0",
+            }}
+          />
+          {/* Dump bed */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "38px",
+              right: "5px",
+              width: "55px",
+              height: "18px",
+              background: "#e67e22",
+              border: "2px solid #d35400",
+              borderRadius: "2px",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-8px",
+              left: "10px",
+              width: "18px",
+              height: "18px",
+              background: "#222",
+              borderRadius: "50%",
+              border: "3px solid #555",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-8px",
+              right: "10px",
+              width: "18px",
+              height: "18px",
+              background: "#222",
+              borderRadius: "50%",
+              border: "3px solid #555",
+            }}
+          />
+        </div>
+
+        {/* Truck - blue, 15s */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "50px",
+            width: "160px",
+            height: "60px",
+            animation: "vehicleMove 15s linear infinite",
+            animationDelay: "-5s",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              width: "160px",
+              height: "42px",
+              background: "#2980b9",
+              borderRadius: "4px 4px 0 0",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "42px",
+              left: "5px",
+              width: "40px",
+              height: "22px",
+              background: "#1a6fa3",
+              borderRadius: "4px 4px 0 0",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-8px",
+              left: "12px",
+              width: "18px",
+              height: "18px",
+              background: "#222",
+              borderRadius: "50%",
+              border: "3px solid #555",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-8px",
+              left: "65px",
+              width: "18px",
+              height: "18px",
+              background: "#222",
+              borderRadius: "50%",
+              border: "3px solid #555",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-8px",
+              right: "12px",
+              width: "18px",
+              height: "18px",
+              background: "#222",
+              borderRadius: "50%",
+              border: "3px solid #555",
+            }}
+          />
+        </div>
+
+        {/* Tractor - green, 12s */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "50px",
+            width: "80px",
+            height: "50px",
+            animation: "vehicleMove 12s linear infinite",
+            animationDelay: "-3s",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              width: "80px",
+              height: "35px",
+              background: "#27ae60",
+              borderRadius: "4px 4px 0 0",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "35px",
+              left: "5px",
+              width: "30px",
+              height: "18px",
+              background: "#1e8449",
+              borderRadius: "4px 4px 0 0",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-10px",
+              left: "5px",
+              width: "22px",
+              height: "22px",
+              background: "#222",
+              borderRadius: "50%",
+              border: "3px solid #555",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-6px",
+              right: "8px",
+              width: "16px",
+              height: "16px",
+              background: "#222",
+              borderRadius: "50%",
+              border: "3px solid #555",
+            }}
+          />
+        </div>
+
+        {/* Trolley - brown, 12s, different offset */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "50px",
+            width: "100px",
+            height: "48px",
+            animation: "vehicleMove 12s linear infinite",
+            animationDelay: "-8s",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              width: "100px",
+              height: "35px",
+              background: "#8B5E3C",
+              borderRadius: "4px 4px 0 0",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "35px",
+              left: "8px",
+              width: "30px",
+              height: "16px",
+              background: "#6B4226",
+              borderRadius: "4px 4px 0 0",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-8px",
+              left: "10px",
+              width: "18px",
+              height: "18px",
+              background: "#222",
+              borderRadius: "50%",
+              border: "3px solid #555",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-8px",
+              right: "10px",
+              width: "18px",
+              height: "18px",
+              background: "#222",
+              borderRadius: "50%",
+              border: "3px solid #555",
+            }}
+          />
         </div>
       </div>
     </section>
@@ -556,6 +970,192 @@ function MachinesSection() {
   );
 }
 
+function MaterialsSection() {
+  const { actor, isFetching } = useActor();
+  const queryClient = useQueryClient();
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<bigint | null>(null);
+  const [deletingId, setDeletingId] = useState<bigint | null>(null);
+
+  const { data: mediaItems, isLoading } = useQuery({
+    queryKey: ["media"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getMedia();
+    },
+    enabled: !!actor && !isFetching,
+  });
+
+  const refreshMedia = () => {
+    queryClient.invalidateQueries({ queryKey: ["media"] });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!actor || deleteTargetId === null) return;
+    setDeletingId(deleteTargetId);
+    try {
+      await actor.deleteMedia(deleteTargetId);
+      refreshMedia();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeletingId(null);
+      setDeleteTargetId(null);
+    }
+  };
+
+  return (
+    <section
+      id="materials"
+      className="py-20 px-4"
+      style={{ background: "#0b0b0b" }}
+    >
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+          <h2
+            className="text-3xl md:text-4xl font-bold mb-2"
+            style={{ color: "#ffffff" }}
+          >
+            हमारी सामग्री
+          </h2>
+          <p
+            className="text-sm font-semibold uppercase tracking-widest mb-4"
+            style={{ color: "#ffcc00" }}
+          >
+            Our Materials
+          </p>
+          <div
+            className="mx-auto h-1 w-16 rounded-full"
+            style={{ background: "#ffcc00" }}
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+          {MATERIALS.map((mat, i) => (
+            <div
+              key={mat.alt}
+              className="overflow-hidden rounded-xl relative group"
+              style={{ border: "1px solid #2a2a2a" }}
+              data-ocid={`materials.item.${i + 1}`}
+            >
+              <img
+                src={mat.src}
+                alt={mat.alt}
+                className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+              <div className="px-4 py-3" style={{ background: "#1a1a1a" }}>
+                <span
+                  className="block text-base font-bold mb-1"
+                  style={{ color: "#ffcc00" }}
+                >
+                  {mat.emoji} {mat.label}
+                </span>
+                <span className="block text-xs" style={{ color: "#cccccc" }}>
+                  {mat.desc}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-center mb-8">
+          <button
+            onClick={() => setUploadOpen(true)}
+            className="px-8 py-3 rounded-full font-bold text-base transition-all hover:scale-105 active:scale-95"
+            style={{
+              background: "#ffcc00",
+              color: "#0b0b0b",
+              boxShadow: "0 4px 20px rgba(255,204,0,0.3)",
+            }}
+            type="button"
+            data-ocid="materials.upload_button"
+          >
+            📦 सामग्री की Photo Upload करें
+          </button>
+        </div>
+
+        {/* Uploaded media gallery */}
+        {isLoading ? (
+          <div
+            className="flex justify-center py-8"
+            data-ocid="materials.loading_state"
+          >
+            <Loader2
+              className="animate-spin"
+              size={32}
+              style={{ color: "#ffcc00" }}
+            />
+          </div>
+        ) : mediaItems && mediaItems.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {mediaItems.map((item, idx) => (
+              <div
+                key={String(item.id)}
+                className="overflow-hidden rounded-xl relative group"
+                style={{ border: "1px solid #2a2a2a", background: "#1a1a1a" }}
+                data-ocid={`materials.item.${idx + 1}`}
+              >
+                {item.mediaType === "video" ? (
+                  <video
+                    src={item.blob.getDirectURL()}
+                    controls
+                    className="w-full"
+                    style={{ aspectRatio: "16/9", objectFit: "cover" }}
+                  >
+                    <track kind="captions" />
+                  </video>
+                ) : (
+                  <img
+                    src={item.blob.getDirectURL()}
+                    alt={item.title}
+                    className="w-full object-cover"
+                    style={{ aspectRatio: "16/9" }}
+                  />
+                )}
+                <div className="px-3 py-3">
+                  <p
+                    className="text-sm font-semibold truncate"
+                    style={{ color: "#ffffff" }}
+                  >
+                    {item.title}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: "#555" }}>
+                    {new Date(
+                      Number(item.timestamp) / 1_000_000,
+                    ).toLocaleDateString("hi-IN")}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDeleteTargetId(item.id)}
+                  className="absolute top-2 right-2 p-1.5 rounded-full opacity-100 transition-all"
+                  style={{ background: "rgba(180,0,0,0.85)", color: "#fff" }}
+                  aria-label="Delete"
+                  data-ocid={`materials.delete_button.${idx + 1}`}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      {uploadOpen && (
+        <UploadModal
+          onClose={() => setUploadOpen(false)}
+          onSuccess={refreshMedia}
+        />
+      )}
+      {deleteTargetId !== null && (
+        <DeleteConfirmDialog
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteTargetId(null)}
+          isDeleting={deletingId !== null}
+        />
+      )}
+    </section>
+  );
+}
+
 // ─── Upload Modal ──────────────────────────────────────────────────────────────
 
 function UploadModal({
@@ -578,6 +1178,9 @@ function UploadModal({
     const file = e.target.files?.[0] ?? null;
     setSelectedFile(file);
     setError("");
+    if (file?.type.startsWith("video/") && file.size > 50 * 1024 * 1024) {
+      setError("यह video बहुत बड़ी है। 50MB से छोटी video चुनें।");
+    }
   };
 
   const handleUpload = async () => {
@@ -792,14 +1395,35 @@ function UploadModal({
             <button
               type="button"
               onClick={handleUpload}
-              disabled={uploading || !selectedFile}
+              disabled={
+                uploading ||
+                !selectedFile ||
+                (!!error && error.includes("50MB"))
+              }
               className="w-full py-4 rounded-xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-2"
               style={{
-                background: uploading || !selectedFile ? "#333" : "#ffcc00",
-                color: uploading || !selectedFile ? "#666" : "#0b0b0b",
-                cursor: uploading || !selectedFile ? "not-allowed" : "pointer",
+                background:
+                  uploading ||
+                  !selectedFile ||
+                  (!!error && error.includes("50MB"))
+                    ? "#333"
+                    : "#ffcc00",
+                color:
+                  uploading ||
+                  !selectedFile ||
+                  (!!error && error.includes("50MB"))
+                    ? "#666"
+                    : "#0b0b0b",
+                cursor:
+                  uploading ||
+                  !selectedFile ||
+                  (!!error && error.includes("50MB"))
+                    ? "not-allowed"
+                    : "pointer",
                 boxShadow:
-                  !uploading && selectedFile
+                  !uploading &&
+                  selectedFile &&
+                  !(!!error && error.includes("50MB"))
                     ? "0 4px 20px rgba(255,204,0,0.35)"
                     : "none",
               }}
@@ -940,11 +1564,7 @@ function VideoSection() {
     if (!actor || deleteTargetId === null) return;
     setDeletingId(deleteTargetId);
     try {
-      await (
-        actor as typeof actor & {
-          deleteMedia: (id: bigint) => Promise<boolean>;
-        }
-      ).deleteMedia(deleteTargetId);
+      await actor.deleteMedia(deleteTargetId);
       refreshMedia();
     } catch (err) {
       console.error(err);
@@ -1000,29 +1620,23 @@ function VideoSection() {
                 <span
                   className="absolute"
                   style={{
-                    fontSize: "3.5rem",
-                    opacity: 0.15,
+                    fontSize: "4rem",
                     userSelect: "none",
                   }}
                 >
                   {video.emoji}
                 </span>
-                <div
-                  className="relative flex items-center justify-center rounded-full"
+                <button
+                  type="button"
+                  onClick={() => setUploadOpen(true)}
+                  className="relative flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all duration-200 hover:brightness-110"
                   style={{
-                    width: "60px",
-                    height: "60px",
-                    background: "rgba(255, 204, 0, 0.15)",
-                    border: "2px solid #ffcc00",
+                    background: "#ffcc00",
+                    color: "#0b0b0b",
                   }}
                 >
-                  <Play
-                    size={26}
-                    color="#ffcc00"
-                    fill="#ffcc00"
-                    style={{ marginLeft: "3px" }}
-                  />
-                </div>
+                  📷 Upload करें
+                </button>
               </div>
               <div className="px-4 py-4">
                 <div className="flex items-center gap-2 mb-1">
@@ -1126,7 +1740,7 @@ function VideoSection() {
                     type="button"
                     onClick={() => setDeleteTargetId(item.id)}
                     disabled={deletingId !== null}
-                    className="absolute top-2 right-2 z-10 flex items-center justify-center rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
+                    className="absolute top-2 right-2 z-10 flex items-center justify-center rounded-full transition-all duration-200"
                     style={{
                       width: "32px",
                       height: "32px",
@@ -1510,7 +2124,7 @@ function Footer() {
       <div className="max-w-5xl mx-auto text-center">
         <div className="flex justify-center mb-4">
           <img
-            src="/assets/generated/satar-construction-logo-transparent.dim_600x300.png"
+            src="/assets/generated/satar-construction-logo-jcb-damfar-transparent.dim_600x300.png"
             alt="Star Construction"
             style={{
               height: "64px",
@@ -1569,6 +2183,53 @@ function Footer() {
             >
               <Copy size={14} /> Copy Link
             </button>
+          </div>
+        </div>
+
+        <div className="mt-6 mb-6 pt-6" style={{ borderTop: "1px solid #222" }}>
+          <p
+            className="text-sm font-semibold mb-4"
+            style={{ color: "#cfcfcf" }}
+          >
+            📲 QR Code से Scan करें
+          </p>
+          <div className="flex items-center justify-center gap-8 flex-wrap">
+            <div className="flex flex-col items-center gap-2">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(typeof window !== "undefined" ? window.location.href : "https://satarconstruction.com")}&bgcolor=111111&color=ffcc00&margin=8`}
+                alt="Website QR Code"
+                style={{
+                  borderRadius: "8px",
+                  border: "2px solid #ffcc00",
+                  width: "120px",
+                  height: "120px",
+                }}
+              />
+              <span
+                className="text-xs font-semibold"
+                style={{ color: "#ffcc00" }}
+              >
+                🌐 Website
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <img
+                src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https%3A%2F%2Fwa.me%2F919890524414&bgcolor=111111&color=25D366&margin=8"
+                alt="WhatsApp QR Code"
+                style={{
+                  borderRadius: "8px",
+                  border: "2px solid #25D366",
+                  width: "120px",
+                  height: "120px",
+                }}
+              />
+              <span
+                className="text-xs font-semibold"
+                style={{ color: "#25D366" }}
+              >
+                📱 WhatsApp
+              </span>
+            </div>
           </div>
         </div>
 
@@ -1657,62 +2318,106 @@ function FloatingButtons() {
   );
 }
 
+const ADMIN_PASSWORD = "Satar123";
+
 export default function App() {
-  const { actor } = useActor();
-  const { login, clear, isLoggingIn, loginStatus, identity } =
-    useInternetIdentity();
   const [isAdmin, setIsAdmin] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState(false);
 
-  const isLoggedIn = loginStatus === "success" && !!identity;
-
-  const checkAdmin = useCallback(async () => {
-    if (!actor || !isLoggedIn) {
-      setIsAdmin(false);
-      return;
+  const handleAdminLogin = () => {
+    if (passwordInput === ADMIN_PASSWORD) {
+      setIsAdmin(true);
+      setShowPasswordDialog(false);
+      setPasswordInput("");
+      setPasswordError(false);
+      setShowInventory(true);
+    } else {
+      setPasswordError(true);
     }
-    try {
-      const result = await (
-        actor as unknown as { isCallerAdmin(): Promise<boolean> }
-      ).isCallerAdmin();
-      setIsAdmin(result);
-      if (!result) {
-        alert("आप admin नहीं हैं। Admin access नहीं मिला।");
-        clear();
-      }
-    } catch {
-      setIsAdmin(false);
-    }
-  }, [actor, isLoggedIn, clear]);
-
-  useEffect(() => {
-    if (isLoggedIn && actor) {
-      checkAdmin();
-    } else if (!isLoggedIn) {
-      setIsAdmin(false);
-      setShowInventory(false);
-    }
-  }, [isLoggedIn, actor, checkAdmin]);
+  };
 
   return (
     <div style={{ background: "#0b0b0b", minHeight: "100vh" }}>
       <Toaster />
       <Header
         isAdmin={isAdmin}
-        isLoggedIn={isLoggedIn}
-        isLoggingIn={isLoggingIn}
-        onLogin={login}
+        onAdminClick={() => {
+          setPasswordInput("");
+          setPasswordError(false);
+          setShowPasswordDialog(true);
+        }}
         onLogout={() => {
-          clear();
           setIsAdmin(false);
           setShowInventory(false);
         }}
         onShowInventory={() => setShowInventory(true)}
       />
+      {showPasswordDialog && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.8)" }}
+          onClick={() => setShowPasswordDialog(false)}
+          onKeyDown={(e) => e.key === "Escape" && setShowPasswordDialog(false)}
+        >
+          <div
+            className="rounded-xl p-6 w-80 max-w-[90vw]"
+            style={{ background: "#1a1a1a", border: "1px solid #333" }}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold mb-4" style={{ color: "#ffcc00" }}>
+              🔐 Admin Login
+            </h2>
+            <input
+              type="password"
+              placeholder="Password डालें"
+              value={passwordInput}
+              onChange={(e) => {
+                setPasswordInput(e.target.value);
+                setPasswordError(false);
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handleAdminLogin()}
+              className="w-full rounded-lg px-3 py-2 mb-2 text-sm outline-none"
+              style={{
+                background: "#111",
+                color: "#fff",
+                border: passwordError ? "1px solid #f44" : "1px solid #333",
+              }}
+            />
+            {passwordError && (
+              <p className="text-xs mb-2" style={{ color: "#f44" }}>
+                ❌ गलत password। फिर try करें।
+              </p>
+            )}
+            <div className="flex gap-2 mt-3">
+              <button
+                type="button"
+                onClick={handleAdminLogin}
+                className="flex-1 py-2 rounded-lg font-semibold text-sm"
+                style={{ background: "#ffcc00", color: "#0b0b0b" }}
+              >
+                Login
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPasswordDialog(false)}
+                className="flex-1 py-2 rounded-lg font-semibold text-sm"
+                style={{ background: "#333", color: "#fff" }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <main style={{ paddingTop: "64px" }}>
         <HeroSection />
         <ServicesSection />
         <MachinesSection />
+        <MaterialsSection />
         <VideoSection />
         <BookingSection />
         <TestimonialsSection />

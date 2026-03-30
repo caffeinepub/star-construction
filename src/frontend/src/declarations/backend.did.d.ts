@@ -46,6 +46,7 @@ export interface _SERVICE {
   >,
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   'addMedia' : ActorMethod<[ExternalBlob, string, string], MediaItem>,
+  'deleteMedia' : ActorMethod<[bigint], boolean>,
   'getMedia' : ActorMethod<[], Array<MediaItem>>,
 }
 export declare const idlService: IDL.ServiceClass;
